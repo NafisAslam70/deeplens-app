@@ -145,7 +145,7 @@ class DeepLensFocusEngine:
         cv2.rectangle(overlay, (box_x, box_y), (box_x + box_width, box_y + box_height), (80, 80, 80), 2)
         frame = cv2.addWeighted(overlay, 0.6, frame, 0.4, 0)
 
-        cv2.putText(frame, "🧠 DeepLens Focus Engine", (box_x + 12, box_y + 25), cv2.FONT_HERSHEY_DUPLEX, 0.55, (255, 255, 255), 1)
+        cv2.putText(frame, "🧠 DeepLens Engine For Focus", (box_x + 12, box_y + 25), cv2.FONT_HERSHEY_DUPLEX, 0.55, (255, 255, 255), 1)
         cv2.putText(frame, f"🔹 Predicted: {label} ({confidence:.0f}%)", (box_x + 10, box_y + 45), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0) if label == "Focused" else (255, 0, 0), 1)
 
         if self.last_override_message:
