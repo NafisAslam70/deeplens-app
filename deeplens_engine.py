@@ -7,7 +7,7 @@ from collections import deque
 
 class DeepLensFocusEngine:
     def __init__(self):
-        self.classifier_model = YOLO("weights/best.pt")
+        self.classifier_model = YOLO("weights/best.torchscript")
         self.classifier_names = self.classifier_model.names
         self.detection_model = YOLO("yolov8n.pt")
 
