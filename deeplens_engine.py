@@ -1,16 +1,27 @@
 import cv2
 import time
 from datetime import datetime
-from ultralytics import YOLO
+import torch
+from PIL import Image
+import torchvision.transforms as transforms
 import mediapipe as mp
 from collections import deque
 
 class DeepLensFocusEngine:
     def __init__(self):
-        self.classifier_model = YOLO("weights/best.torchscript", task='classify')
-        self.classifier_names = self.classifier_model.names
-        self.detection_model = YOLO("yolov8n.pt", task='detect')
+        self.classifier_model = torch.jit.load("weights/best.torchscript")
+        self.classifier_model.eval()
+        self.classifier_names = {
+            0: "Focused",
+            1: "LookingAway",
+            2: "Phone",
+            3: "Absent",
+            4: "BadPosture",
+            5: "Drowsy"
+        }
 
+        from ultralytics import YOLO
+        self.detection_model = YOLO("yolov8n.pt", task='detect')
 
         mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True)
@@ -30,6 +41,11 @@ class DeepLensFocusEngine:
         self.summary_inserted_msg = ""
         self.summary_inserted_time = 0
 
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor()
+        ])
+
     def gaze_is_away(self, frame):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(rgb)
@@ -46,16 +62,17 @@ class DeepLensFocusEngine:
         return False
 
     def process_frame(self, frame):
-        label, confidence = "-", 0.0
-        results = self.classifier_model(frame)
-        try:
-            probs = results[0].probs
-            if probs:
-                class_id = probs.top1
-                label = self.classifier_names.get(class_id, "-")
-                confidence = float(probs.top1conf) * 100
-        except:
-            pass
+        # Preprocess and infer
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = Image.fromarray(image)
+        input_tensor = self.transform(image).unsqueeze(0)
+
+        with torch.no_grad():
+            outputs = self.classifier_model(input_tensor)
+            probs = torch.nn.functional.softmax(outputs[0], dim=0)
+            class_id = torch.argmax(probs).item()
+            confidence = probs[class_id].item() * 100
+            label = self.classifier_names.get(class_id, "-")
 
         self.live_status_label = label
         self.live_status_conf = confidence
@@ -159,7 +176,6 @@ class DeepLensFocusEngine:
             y = box_y + 78
             cv2.rectangle(frame, (x, y), (x + 5, y + 12), color, -1)
 
-        # Rolling summary
         words = self.rolling_summary_msg.split()
         line1, line2 = "", ""
         for word in words:
