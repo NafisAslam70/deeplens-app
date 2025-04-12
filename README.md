@@ -1,6 +1,6 @@
 # 🧠 DeepLens Engine for Focus
 
-A real-time attention tracker using YOLOv11-cls + MediaPipe + Streamlit.
+A real-time attention tracker using YOLOv11-cls, yolov8n + MediaPipe + Streamlit.
 
 ## 🔍 Features
 - Focus detection every second using YOLO classification
