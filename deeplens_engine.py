@@ -7,9 +7,10 @@ from collections import deque
 
 class DeepLensFocusEngine:
     def __init__(self):
-        self.classifier_model = YOLO("weights/best.torchscript")
+        self.classifier_model = YOLO("weights/best.torchscript", task='classify')
         self.classifier_names = self.classifier_model.names
-        self.detection_model = YOLO("yolov8n.pt")
+        self.detection_model = YOLO("yolov8n.pt", task='detect')
+
 
         mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True)
